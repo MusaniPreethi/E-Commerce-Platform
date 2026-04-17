@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import api from "../api/api.js";
+import { useAuth } from "../context/AuthContext.jsx";
 
 const PAGE_SIZE = 24;
 
@@ -14,6 +15,13 @@ export default function HomePage() {
   const [items, setItems] = useState([]);
   const [total, setTotal] = useState(0);
   const [errorMsg, setErrorMsg] = useState("");
+  const [wishlistIds, setWishlistIds] = useState([]);
+  const [wishlistBusyId, setWishlistBusyId] = useState(null);
+  const [wishlistError, setWishlistError] = useState("");
+
+  const { status: authStatus, user } = useAuth();
+  const isLoggedIn = authStatus === "authed" && user;
+  const navigate = useNavigate();
 
   const skip = (page - 1) * PAGE_SIZE;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
@@ -59,7 +67,54 @@ export default function HomePage() {
       cancelled = true;
     };
   }, [q, category, page]);
+  useEffect(() => {
+    if (!isLoggedIn) {
+      setWishlistIds([]);
+      return;
+    }
 
+    let cancelled = false;
+    async function loadWishlist() {
+      try {
+        const res = await api.get("/customer/wishlist");
+        if (!cancelled) {
+          setWishlistIds(Array.isArray(res.data) ? res.data.map((item) => item._id) : []);
+        }
+      } catch (_err) {
+        if (!cancelled) {
+          setWishlistError("Unable to load wishlist.");
+        }
+      }
+    }
+
+    loadWishlist();
+    return () => {
+      cancelled = true;
+    };
+  }, [isLoggedIn]);
+
+  async function toggleWishlist(productId) {
+    if (!isLoggedIn) {
+      navigate("/login", { state: { from: "/" } });
+      return;
+    }
+    try {
+      setWishlistBusyId(productId);
+      setWishlistError("");
+      const inWishlist = wishlistIds.includes(productId);
+      if (inWishlist) {
+        await api.delete(`/customer/wishlist/${productId}`);
+        setWishlistIds((prev) => prev.filter((id) => id !== productId));
+      } else {
+        await api.post(`/customer/wishlist/${productId}`);
+        setWishlistIds((prev) => [...prev, productId]);
+      }
+    } catch (_err) {
+      setWishlistError("Could not update wishlist.");
+    } finally {
+      setWishlistBusyId(null);
+    }
+  }
   function goToPage(p) {
     const next = Math.min(Math.max(1, p), totalPages);
     const sp = new URLSearchParams();
@@ -97,6 +152,11 @@ export default function HomePage() {
             <p className="muted small">
               Showing {skip + 1}–{Math.min(skip + PAGE_SIZE, total)} of {total}
             </p>
+          ) : null}
+          {wishlistError ? (
+            <div className="errorText" style={{ marginTop: 8 }}>
+              {wishlistError}
+            </div>
           ) : null}
         </div>
       </div>
@@ -152,6 +212,14 @@ export default function HomePage() {
                   </div>
 
                   <div className="productActions">
+                    <button
+                      className="btn btn-secondary"
+                      type="button"
+                      onClick={() => toggleWishlist(p._id)}
+                      disabled={wishlistBusyId === p._id}
+                    >
+                      {wishlistIds.includes(p._id) ? "Remove from Wishlist" : "Add to Wishlist"}
+                    </button>
                     <Link className="btn" to={`/product/${p._id}`}>
                       View Details
                     </Link>

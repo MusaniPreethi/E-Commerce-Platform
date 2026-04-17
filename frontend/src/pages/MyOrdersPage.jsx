@@ -10,6 +10,21 @@ export default function MyOrdersPage() {
   const [orders, setOrders] = useState([]);
   const [errorMsg, setErrorMsg] = useState("");
 
+  async function handleDeleteOrder(orderId) {
+    if (!orderId) return;
+    const confirmed = window.confirm("Are you sure you want to delete this order?");
+    if (!confirmed) return;
+
+    try {
+      await api.delete(`/orders/${orderId}`);
+      setOrders((prev) => prev.filter((order) => order.id !== orderId && order._id !== orderId));
+    } catch (err) {
+      console.error("delete order failed", err);
+      setErrorMsg("Unable to delete order. Please try again.");
+      setStatus("error");
+    }
+  }
+
   useEffect(() => {
     let cancelled = false;
 
@@ -60,11 +75,11 @@ export default function MyOrdersPage() {
         orders.length ? (
           <div className="stack">
             {orders.map((o) => (
-              <div key={o._id} className="card">
+              <div key={o.id||o._id} className="card">
                 <div className="cardRow">
                   <div>
                     <div className="cardTitle">
-                      {o.productId?.name || "Order"}
+                      {o.productName || o.productId?.name || "Order"}
                     </div>
                     <div className="orderMeta">
                       <div className="orderMetaItem">
@@ -86,6 +101,14 @@ export default function MyOrdersPage() {
                       View Product
                     </Link>
                   ) : null}
+                  <button
+                    className="btn btn-secondary"
+                    type="button"
+                    onClick={() => handleDeleteOrder(o.id || o._id)}
+                    style={{ marginLeft: 10 }}
+                  >
+                    Delete
+                  </button>
                 </div>
                 <div className="muted" style={{ marginTop: 10 }}>
                   Address: {o.address}

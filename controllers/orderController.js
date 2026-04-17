@@ -1,3 +1,4 @@
+
 import mongoose from "mongoose";
 import Deal from "../models/Deal.js";
 import Order from "../models/Order.js";
@@ -15,7 +16,7 @@ export async function createOrder(req, res) {
       return res.status(400).json({ message: "address is required" });
     }
 
-    const deal = await Deal.findById(dealId);
+    const deal = await Deal.findById(dealId).populate("productId");
     if (!deal) {
       return res.status(404).json({ message: "Deal not found" });
     }
@@ -24,11 +25,16 @@ export async function createOrder(req, res) {
       return res.status(400).json({ message: "Deal is not completed" });
     }
 
+    const productPrice = Number(deal.productId?.price ?? 0);
+    const pricePaid = Number(
+      deal.discountPrice > 0 ? deal.discountPrice : productPrice
+    );
+
     const order = await Order.create({
       userId,
       productId: deal.productId,
       dealId: deal._id,
-      pricePaid: Number(deal.discountPrice ?? 0),
+      pricePaid,
       address: address.trim(),
       status: "pending"
     });
@@ -57,11 +63,43 @@ export async function getOrdersByUser(req, res) {
       .sort({ createdAt: -1 })
       .populate("productId")
       .populate("dealId");
+    const formattedOrders = orders.map(order => ({
+      id: order._id,
+      productName: order.productId?.name,
+      pricePaid: order.pricePaid ?? order.productId?.price,
+      status: order.status,
+      address: order.address,
+    }));
+    return res.status(200).json(formattedOrders);
 
-    return res.status(200).json(orders);
   } catch (err) {
     console.error("getOrdersByUser error:", err);
     return res.status(500).json({ message: "Server error" });
   }
 }
 
+export async function deleteOrderById(req, res) {
+  try {
+    const { orderId } = req.params;
+    if (!orderId || typeof orderId !== "string" || !mongoose.Types.ObjectId.isValid(orderId)) {
+      return res.status(400).json({ message: "Valid orderId is required" });
+    }
+
+    const order = await Order.findById(orderId);
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    const isAdmin = req.user?.role === "admin";
+    const isOwner = String(req.user?._id ?? "") === String(order.userId);
+    if (!isAdmin && !isOwner) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+
+    await Order.deleteOne({ _id: orderId });
+    return res.status(200).json({ message: "Order deleted" });
+  } catch (err) {
+    console.error("deleteOrderById error:", err);
+    return res.status(500).json({ message: "Server error" });
+  }
+}

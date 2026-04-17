@@ -72,6 +72,14 @@ export default function Navbar({ onOpenSidebar }) {
                 Account
               </NavLink>
               <NavLink
+                to="/wishlist"
+                className={({ isActive }) =>
+                  isActive ? "navLink active" : "navLink"
+                }
+              >
+                Wishlist
+              </NavLink>
+              <NavLink
                 to="/orders"
                 className={({ isActive }) =>
                   isActive ? "navLink active" : "navLink"

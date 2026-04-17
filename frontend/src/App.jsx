@@ -4,6 +4,7 @@ import HomePage from "./pages/HomePage.jsx";
 import ProductPage from "./pages/ProductPage.jsx";
 import PaymentPage from "./pages/PaymentPage.jsx";
 import MyOrdersPage from "./pages/MyOrdersPage.jsx";
+import WishlistPage from "./pages/WishlistPage.jsx";
 import LoginPage from "./pages/LoginPage.jsx";
 import RegisterPage from "./pages/RegisterPage.jsx";
 import RequireAuth from "./components/RequireAuth.jsx";
@@ -34,6 +35,14 @@ function App() {
           element={
             <RequireAuth>
               <MyOrdersPage />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/wishlist"
+          element={
+            <RequireAuth>
+              <WishlistPage />
             </RequireAuth>
           }
         />

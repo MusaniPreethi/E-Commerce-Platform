@@ -36,6 +36,11 @@ export default function ProductPage() {
   const [joinStatus, setJoinStatus] = useState("idle"); // idle | loading | success | error
   const [joinError, setJoinError] = useState("");
 
+  const [wishlisted, setWishlisted] = useState(false);
+  const [wishlistStatus, setWishlistStatus] = useState("idle");
+  const [wishlistError, setWishlistError] = useState("");
+  const [wishlistMessage, setWishlistMessage] = useState("");
+
   const expiresAtMs = useMemo(() => {
     if (!activeDeal?.expiresAt) return null;
     const t = new Date(activeDeal.expiresAt).getTime();
@@ -74,6 +79,33 @@ export default function ProductPage() {
       cancelled = true;
     };
   }, [id]);
+
+  useEffect(() => {
+    if (!isLoggedIn || !product?._id) {
+      setWishlisted(false);
+      return;
+    }
+
+    let cancelled = false;
+    async function loadWishlist() {
+      try {
+        const res = await api.get("/customer/wishlist");
+        if (!cancelled) {
+          const ids = Array.isArray(res.data) ? res.data.map((item) => item._id) : [];
+          setWishlisted(ids.includes(product._id));
+        }
+      } catch (_err) {
+        if (!cancelled) {
+          setWishlistError("Could not load wishlist status.");
+        }
+      }
+    }
+
+    loadWishlist();
+    return () => {
+      cancelled = true;
+    };
+  }, [isLoggedIn, product?._id]);
 
   function requireLogin() {
     navigate("/login", { state: { from: `/product/${id}` } });
@@ -138,6 +170,31 @@ export default function ProductPage() {
     } catch (_err) {
       setJoinStatus("error");
       setJoinError("Failed to join deal.");
+    }
+  }
+
+  async function handleToggleWishlist() {
+    if (!isLoggedIn) {
+      requireLogin();
+      return;
+    }
+
+    try {
+      setWishlistStatus("loading");
+      setWishlistError("");
+
+      if (wishlisted) {
+        await api.delete(`/customer/wishlist/${product._id}`);
+        setWishlisted(false);
+      } else {
+        await api.post(`/customer/wishlist/${product._id}`);
+        setWishlisted(true);
+      }
+
+      setWishlistStatus("success");
+    } catch (_err) {
+      setWishlistStatus("error");
+      setWishlistError("Failed to update wishlist.");
     }
   }
 
@@ -208,7 +265,10 @@ export default function ProductPage() {
               <button className="btn btnPrimary" type="button" onClick={handleBuyNow}>
                 Buy Now
               </button>
-              <button className="btn" type="button">
+              <button className="btn" type="button" onClick={handleToggleWishlist}>
+                {wishlisted ? "Remove from Wishlist" : "Add to Wishlist"}
+              </button>
+              <button className="btn" type="button" onClick={handleJoinDeal}>
                 Join Group Deal
               </button>
             </div>
@@ -255,9 +315,14 @@ export default function ProductPage() {
               {createStatus === "error" ? (
                 <div className="errorText">{createError}</div>
               ) : null}
-
-              <div className="dealDivider" />
-
+            {wishlistStatus === "error" ? (
+              <div className="errorText">{wishlistError}</div>
+            ) : null}
+            {wishlistMessage ? (
+              <div className="pill" style={{ marginTop: 8 }}>
+                {wishlistMessage}
+              </div>
+            ) : null}
               <div className="dealRow">
                 <label className="dealLabel grow">
                   Deal ID
