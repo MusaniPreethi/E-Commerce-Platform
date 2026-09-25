@@ -7,6 +7,13 @@ import authRoutes from "./routes/authRoutes.js";
 
 const app = express();
 
+console.log("CLIENT_ORIGIN:", JSON.stringify(process.env.CLIENT_ORIGIN));
+
+app.use((req, res, next) => {
+  console.log("REQUEST ORIGIN:", JSON.stringify(req.headers.origin));
+  next();
+});
+
 app.use(
   cors({
     origin: "https://e-commerce-frontend-ashy-theta.vercel.app",
