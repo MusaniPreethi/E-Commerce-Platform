@@ -1,14 +1,11 @@
 import express from "express";
-
+import cors from "cors";
 import cookieParser from "cookie-parser";
 
 import healthRoutes from "./routes/healthRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 
 const app = express();
-console.log("### NEW APP.JS VERSION - CORS TEST ###");
-
-
 
 app.use(
   cors({
