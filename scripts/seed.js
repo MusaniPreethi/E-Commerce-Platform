@@ -272,17 +272,6 @@ async function main() {
     "Beauty": ["makeup", "cosmetics", "lipstick", "skincare", "beauty", "perfume", "cosmetic"]
   };
 
-  const categoryImageKeywords = {
-    "Electronics": ["laptop", "smartphone", "headphones", "keyboard", "monitor", "charger", "mouse"],
-    "Home": ["lamp", "sofa", "furniture", "interior", "decor", "shelf", "rug"],
-    "Kitchen": ["blender", "cookware", "kitchen", "utensils", "appliance", "pots", "pan"],
-    "Fashion": ["clothing", "shirt", "jeans", "dress", "shoes", "fashion", "apparel"],
-    "Sports": ["yoga", "dumbbell", "fitness", "sports", "gym", "running", "workout"],
-    "Books": ["books", "reading", "library", "novel", "literature", "bookshelf", "study"],
-    "Toys": ["toys", "games", "lego", "puzzle", "playtime", "action figure", "blocks"],
-    "Beauty": ["makeup", "cosmetics", "lipstick", "skincare", "beauty", "perfume", "cream"]
-  };
-
   const categories = Object.keys(categoryItems);
   
   const products = Array.from({ length: total }, (_, i) => {
@@ -332,4 +321,3 @@ try {
 } finally {
   await mongoose.connection.close().catch(() => {});
 }
-
