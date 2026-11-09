@@ -300,7 +300,7 @@ async function main() {
       name: `${adj} ${item}`,
       price,
       description: `${item} • ${adj} ${item} built for everyday use.`,
-      image: `https://source.unsplash.com/800x600/?${keyword}`,
+      image: `https://picsum.photos/seed/${i}/800/600`,
       category: cat
     };
   });

@@ -16,7 +16,7 @@ app.use((req, res, next) => {
 
 app.use(
   cors({
-    origin: "https://e-commerce-frontend-ashy-theta.vercel.app",
+    origin: process.env.CLIENT_ORIGIN,
     credentials: true,
   })
 );
