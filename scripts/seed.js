@@ -289,7 +289,7 @@ async function main() {
       name: `${adj} ${item}`,
       price,
       description: `${item} • ${adj} ${item} built for everyday use.`,
-      image: `https://picsum.photos/seed/${i}/800/600`,
+      image:`https://loremflickr.com/800/600/${encodeURIComponent(keyword)}?lock=${i}`,
       category: cat
     };
   });
